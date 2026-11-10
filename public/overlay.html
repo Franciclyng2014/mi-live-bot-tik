@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Overlay</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    body { background: transparent; margin: 0; overflow: hidden; }
+    #alert { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: #fff; padding: 12px 20px; border-radius: 12px; font-size: 24px; display: none; }
+    #nowPlaying { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.6); color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 18px; display: none; }
+  </style>
+</head>
+<body>
+  <div id="alert"></div>
+  <div id="nowPlaying"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/overlay.js"></script>
+</body>
+</html>

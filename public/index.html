@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mi Live Bot</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🎬 Mi Live Bot</h1>
+    <div id="status" class="status">Desconectado</div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="connect" class="active">🔌 Conexión</button>
+    <button data-tab="chat">💬 Chat</button>
+    <button data-tab="music">🎵 Música</button>
+    <button data-tab="sounds">🔊 Sonidos</button>
+    <button data-tab="points">🏆 Puntos</button>
+    <button data-tab="overlay">🖼️ Overlay</button>
+    <button data-tab="settings">⚙️ Ajustes</button>
+  </nav>
+
+  <main>
+    <section id="tab-connect" class="tab active">
+      <div class="card">
+        <h2>Conectar a TikTok LIVE</h2>
+        <div class="row">
+          <input id="username" placeholder="@usuario de TikTok" />
+          <button id="btnConnect">Conectar</button>
+          <button id="btnDisconnect" class="secondary">Desconectar</button>
+        </div>
+        <p class="hint">Transmite desde tu teléfono. El programa detecta tu live y se conecta automáticamente si activas Auto-conectar.</p>
+        <div id="connLog" class="log"></div>
+      </div>
+    </section>
+
+    <section id="tab-chat" class="tab">
+      <div class="card">
+        <h2>Chat en vivo</h2>
+        <div id="chatLog" class="chat-log"></div>
+      </div>
+    </section>
+
+    <section id="tab-music" class="tab">
+      <div class="card">
+        <h2>Música (YouTube gratis)</h2>
+        <div class="row">
+          <input id="searchQuery" placeholder="Buscar canción o pegar URL de YouTube" />
+          <button id="btnSearch">Buscar</button>
+          <button id="btnPlay">Reproducir</button>
+        </div>
+        <div id="nowPlaying" class="now-playing">Nada reproduciéndose</div>
+        <audio id="audioPlayer" controls></audio>
+        <div class="row">
+          <button id="btnSkip" class="secondary">Saltar</button>
+          <button id="btnPause" class="secondary">Pausar</button>
+          <button id="btnResume" class="secondary">Reanudar</button>
+        </div>
+        <h3>Cola (<span id="queueCount">0</span>)</h3>
+        <div class="row">
+          <button id="btnClearQueue" class="secondary">Limpiar cola</button>
+        </div>
+        <ul id="queueList" class="queue"></ul>
+      </div>
+    </section>
+
+    <section id="tab-sounds" class="tab">
+      <div class="card">
+        <h2>Soundboard</h2>
+        <div class="row">
+          <input id="soundName" placeholder="Nombre del sonido" />
+          <input id="soundUrl" placeholder="URL del sonido (mp3/wav)" />
+          <button id="btnAddSound">Añadir</button>
+        </div>
+        <div id="soundButtons" class="sound-buttons"></div>
+      </div>
+    </section>
+
+    <section id="tab-points" class="tab">
+      <div class="card">
+        <h2>Puntos de audiencia</h2>
+        <table id="pointsTable"><thead><tr><th>Usuario</th><th>Puntos</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section id="tab-overlay" class="tab">
+      <div class="card">
+        <h2>Overlay para OBS (futuro)</h2>
+        <p>URL del overlay:</p>
+        <code id="overlayUrl"></code>
+        <iframe id="overlayPreview" src="/overlay" style="width:100%;height:320px;border:1px solid var(--border);background:#000;border-radius:12px"></iframe>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="tab">
+      <div class="card">
+        <h2>Ajustes</h2>
+        <div class="row">
+          <label>Prefijo <input id="setPrefix" value="!" /></label>
+          <label>Comando play <input id="setPlayCmd" value="play" /></label>
+          <label><input type="checkbox" id="setAutoConnect" checked /> Auto-conectar</label>
+        </div>
+
+        <h3>Chat (comentarios)</h3>
+        <div class="row">
+          <label><input type="checkbox" id="setTtsChat" checked /> Leer chat</label>
+          <label>Idioma
+            <select id="setLangChat">
+              <option value="es">Español</option>
+              <option value="es-ES">Español (España)</option>
+              <option value="es-MX">Español (México)</option>
+              <option value="es-AR">Español (Argentina)</option>
+              <option value="en">Inglés</option>
+              <option value="pt">Portugués</option>
+            </select>
+          </label>
+          <label>Velocidad <input id="setRateChat" type="range" min="0.5" max="2" step="0.1" value="1" /></label>
+        </div>
+
+        <h3>Regalos (donaciones)</h3>
+        <div class="row">
+          <label><input type="checkbox" id="setTtsGift" checked /> Leer regalos</label>
+          <label>Idioma
+            <select id="setLangGift">
+              <option value="es">Español</option>
+              <option value="es-ES">Español (España)</option>
+              <option value="es-MX">Español (México)</option>
+              <option value="es-AR">Español (Argentina)</option>
+              <option value="en">Inglés</option>
+              <option value="pt">Portugués</option>
+            </select>
+          </label>
+          <label>Velocidad <input id="setRateGift" type="range" min="0.5" max="2" step="0.1" value="1" /></label>
+        </div>
+
+        <h3>Tap tap (likes)</h3>
+        <div class="row">
+          <label><input type="checkbox" id="setTtsLike" checked /> Leer tap tap</label>
+          <label>Idioma
+            <select id="setLangLike">
+              <option value="es">Español</option>
+              <option value="es-ES">Español (España)</option>
+              <option value="es-MX">Español (México)</option>
+              <option value="es-AR">Español (Argentina)</option>
+              <option value="en">Inglés</option>
+              <option value="pt">Portugués</option>
+            </select>
+          </label>
+          <label>Velocidad <input id="setRateLike" type="range" min="0.5" max="2" step="0.1" value="1" /></label>
+        </div>
+
+        <div class="row">
+          <label><input type="checkbox" id="setAlertGift" checked /> Alertas de regalos</label>
+        </div>
+
+        <div class="row">
+          <button id="btnSaveSettings">Guardar</button>
+          <button id="btnTestVoice" class="secondary">Probar voz (chat)</button>
+        </div>
+        <p class="hint">Voces gratis por idioma (Google). No requiere API Key ni tarjeta. Para segundo plano: mantén la pestaña abierta.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  </script>
+</body>
+</html>
