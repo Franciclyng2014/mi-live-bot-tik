@@ -302,7 +302,7 @@ function getMusicState() {
 // ---------- YouTube ----------
 function ytExec(args) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android', ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '', err = '';
     proc.stdout.on('data', (d) => { out += d.toString(); });
     proc.stderr.on('data', (d) => { err += d.toString(); });
@@ -481,10 +481,10 @@ app.get('/api/stream', async (req, res) => {
     const meta = await getTrackMeta(url);
     ext = meta.ext || ext;
   } catch {}
-  const mime = ext === 'm4a' || ext === 'mp4' ? 'audio/mp4' : 'audio/webm';
+  const mime = 'video/mp4';
   res.setHeader('Content-Type', mime);
   res.setHeader('Cache-Control', 'no-cache');
-  const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '-f', 'bestaudio', '-o', '-', url], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android', '-f', '18', '-o', '-', url], { stdio: ['ignore', 'pipe', 'pipe'] });
   state.streamProc = proc;
   proc.stdout.pipe(res);
   proc.stderr.on('data', (d) => { /* console.error(d.toString()); */ });
