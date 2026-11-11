@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io({ transports: ['polling'] });
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
