@@ -332,6 +332,7 @@ async function searchYouTube(query) {
   try {
     const ysa = require('youtube-search-api');
     const res = await ysa.GetListByKeyword(query, false, 1);
+    console.log('YSA result:', JSON.stringify(res).slice(0, 200));
     const item = (res.items || [])[0];
     if (item && item.id) {
       return {
@@ -343,7 +344,7 @@ async function searchYouTube(query) {
       };
     }
   } catch (e) {
-    console.log('youtube-search-api failed:', e.message);
+    console.log('youtube-search-api failed:', e.message, e.stack);
   }
   // Fallback to yt-dlp
   const out = await ytExec(['-J', '--no-warnings', `ytsearch1:${query}`]);
