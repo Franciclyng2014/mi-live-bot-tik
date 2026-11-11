@@ -88,15 +88,17 @@ socket.on('music:track', (t) => {
   console.log('music:track received:', t && t.title);
   currentTrack = t;
   $('#nowPlaying').textContent = `🎵 ${t.title} (pedido por ${t.requestedBy || ''})`;
-  const iframe = $('#ytPlayer');
-  if (iframe && t.id) {
-    iframe.src = `https://www.youtube.com/embed/${t.id}?autoplay=1&controls=1&modestbranding=1&rel=0`;
-  }
+  const video = $('#audioPlayer');
+  video.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
+  video.volume = 1;
+  video.playbackRate = 1;
+  video.load();
+  video.play().catch((e) => { console.warn('autoplay blocked:', e && e.message); });
 });
 $('#btnPlayNow').onclick = () => {
-  if (currentTrack && currentTrack.id) {
-    const iframe = $('#ytPlayer');
-    iframe.src = `https://www.youtube.com/embed/${currentTrack.id}?autoplay=1&controls=1&modestbranding=1&rel=0`;
+  const video = $('#audioPlayer');
+  if (video && video.src) {
+    video.play().catch((e) => alert('No se pudo reproducir: ' + (e && e.message ? e.message : e)));
   }
 };
 socket.on('music:state', (s) => {
