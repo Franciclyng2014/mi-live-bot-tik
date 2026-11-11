@@ -107,16 +107,18 @@ async function connectTikTok(username) {
   });
 
   conn.on(WebcastEvent.CHAT, (data) => {
+    console.log('CHAT RAW:', JSON.stringify(data).slice(0, 500));
+    const user = data.uniqueId || data.user?.uniqueId || data.nickname || data.user?.nickname || 'user';
     const msg = {
       id: data.msgId || Date.now(),
-      user: data.uniqueId || data.nickname || 'user',
-      nickname: data.nickname,
-      comment: data.comment,
+      user: user,
+      nickname: data.nickname || data.user?.nickname,
+      comment: data.comment || data.text || '',
       timestamp: Date.now()
     };
     addChat(msg);
     handleCommand(msg);
-    if (state.settings.ttsChat) {
+    if (state.settings.ttsChat !== false) {
       broadcast('tts:speak', { kind: 'chat', text: `${msg.user} dice ${msg.comment}`, user: msg.user });
     }
     // points
@@ -553,6 +555,15 @@ app.post('/api/eleven/tts', async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: String(e.message || e) });
   }
+});
+
+app.get('/api/yt-version', (req, res) => {
+  const { spawn } = require('child_process');
+  const p = spawn('python', ['-m', 'yt_dlp', '--version']);
+  let out = '';
+  p.stdout.on('data', (d) => { out += d.toString(); });
+  p.on('close', () => res.json({ version: out.trim() }));
+  p.on('error', (e) => res.status(500).json({ error: String(e.message) }));
 });
 
 app.get('/api/points', (req, res) => res.json(state.points));
