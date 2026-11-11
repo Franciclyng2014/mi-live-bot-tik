@@ -92,7 +92,9 @@ socket.on('music:track', (t) => {
   video.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
   video.volume = 1;
   video.playbackRate = 1;
-  video.play().catch((e) => { console.warn('autoplay blocked:', e && e.message); });
+  video.load();
+  video.oncanplay = () => { video.play().catch(() => {}); };
+  video.play().catch(() => {});
 });
 document.addEventListener('click', () => {
   const video = $('#audioPlayer');
