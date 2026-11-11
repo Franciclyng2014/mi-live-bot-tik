@@ -16,7 +16,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, etag: false }));
 
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -582,24 +582,23 @@ app.get('/api/search', async (req, res) => {
 app.get('/api/stream', async (req, res) => {
   const video = req.query.v;
   if (!video) return res.status(400).end();
-  // kill previous
-  if (state.streamProc) { try { state.streamProc.kill(); } catch {} state.streamProc = null; }
   const url = video.startsWith('http') ? video : `https://www.youtube.com/watch?v=${video}`;
-  // get ext first
-  let ext = 'webm';
   try {
-    const meta = await getTrackMeta(url);
-    ext = meta.ext || ext;
-  } catch {}
-  const mime = 'video/mp4';
-  res.setHeader('Content-Type', mime);
-  res.setHeader('Cache-Control', 'no-cache');
-  const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android', '-f', '18', '-o', '-', url], { stdio: ['ignore', 'pipe', 'pipe'] });
-  state.streamProc = proc;
-  proc.stdout.pipe(res);
-  proc.stderr.on('data', (d) => { /* console.error(d.toString()); */ });
-  proc.on('close', () => { if (state.streamProc === proc) state.streamProc = null; });
-  req.on('close', () => { if (state.streamProc === proc) { try { proc.kill(); } catch {} state.streamProc = null; } });
+    const directUrl = await new Promise((resolve, reject) => {
+      const p = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android', '-f', '18', '--get-url', url], { stdio: ['ignore', 'pipe', 'pipe'] });
+      let out = '', err = '';
+      p.stdout.on('data', (d) => { out += d.toString(); });
+      p.stderr.on('data', (d) => { err += d.toString(); });
+      p.on('close', (code) => {
+        if (code !== 0 || !out.trim()) reject(new Error(err || 'no url'));
+        else resolve(out.trim().split('\\n')[0]);
+      });
+      p.on('error', reject);
+    });
+    res.redirect(directUrl);
+  } catch (e) {
+    res.status(500).send(String(e.message || e));
+  }
 });
 
 app.get('/api/sounds', (req, res) => res.json(state.sounds));
