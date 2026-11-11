@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/
 RUN python3 -m pip install -U yt-dlp --break-system-packages --no-cache-dir
 WORKDIR /app
 COPY package*.json ./
-RUN npm install && echo "deps installed v2"
+RUN npm install && echo "deps installed v3"
 COPY . .
 ENV PORT=3000
 EXPOSE 3000
