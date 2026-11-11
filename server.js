@@ -36,7 +36,8 @@ const state = {
   points: {}, // username -> points
   settings: loadSettings(),
   streamProc: null,
-  sounds: loadSounds()
+  sounds: loadSounds(),
+  pendingPlay: null
 };
 
 function loadSettings() {
@@ -48,7 +49,7 @@ function loadSettings() {
     rateChat: 1, rateGift: 1, rateLike: 1, rateFollow: 1, rateJoin: 1, rateShare: 1,
     maxQueueSize: 50,
     // text filters
-    skipEmojisOnly: true, stripEmojis: false, collapseRepeats: true, skipLinks: true, normalizeCaps: true,
+    skipEmojisOnly: false, stripEmojis: false, collapseRepeats: true, skipLinks: true, normalizeCaps: true,
     // moderation
     profanityLevel: 'medium', linksMode: 'blur', blockSpam: true, blockRepeats: true, tiktokOnly: true, maxCommentLength: 200,
     allowedUsers: [], blockedUsers: []
@@ -254,7 +255,18 @@ function handleCommand(msg) {
   if (cmd === (state.settings.playCommand || 'play')) {
     if (!args) return;
     broadcast('command:play', { user: msg.user, query: args });
-    enqueuePlay(args, msg.user);
+    searchAndPending(args, msg.user);
+  } else if (cmd === 'confirm' || cmd === 'confirmar') {
+    if (state.pendingPlay) {
+      enqueueTrack(state.pendingPlay.track, state.pendingPlay.user);
+      state.pendingPlay = null;
+      broadcast('chat:bot', { text: 'Añadido a la cola' });
+    } else {
+      broadcast('chat:bot', { text: 'No hay búsqueda pendiente. Usa !play primero.' });
+    }
+  } else if (cmd === 'cancel' || cmd === 'cancelar') {
+    state.pendingPlay = null;
+    broadcast('chat:bot', { text: 'Búsqueda cancelada' });
   } else if (cmd === 'skip' || cmd === 'next') {
     skipTrack();
   } else if (cmd === 'queue' || cmd === 'cola') {
@@ -341,21 +353,36 @@ async function getTrackMeta(videoIdOrUrl) {
   };
 }
 
-async function enqueuePlay(query, user) {
-  const max = state.settings.maxQueueSize || 50;
-  if (state.queue.length >= max) {
-    broadcast('tiktok:error', { message: `La cola está llena (máx. ${max} canciones). Usa !skip o !clear.` });
-    return;
-  }
+async function searchAndPending(query, user) {
   try {
     const track = await searchYouTube(query);
     track.requestedBy = user;
-    state.queue.push(track);
-    broadcast('music:queue', state.queue);
-    broadcast('music:state', getMusicState());
-    if (!state.nowPlaying && !state.streamProc) {
-      playNext();
-    }
+    state.pendingPlay = { track, user, timestamp: Date.now() };
+    broadcast('chat:bot', { text: `Encontrado: ${track.title}. Escribe !confirm para añadir o !cancel para descartar` });
+  } catch (e) {
+    broadcast('tiktok:error', { message: `No se pudo buscar: ${e.message}` });
+  }
+}
+
+function enqueueTrack(track, user) {
+  const max = state.settings.maxQueueSize || 50;
+  if (state.queue.length >= max) {
+    broadcast('tiktok:error', { message: `La cola está llena (máx. ${max}). Usa !skip o !clear.` });
+    return;
+  }
+  track.requestedBy = user;
+  state.queue.push(track);
+  broadcast('music:queue', state.queue);
+  broadcast('music:state', getMusicState());
+  if (!state.nowPlaying && !state.streamProc) {
+    playNext();
+  }
+}
+
+async function enqueuePlay(query, user) {
+  try {
+    const track = await searchYouTube(query);
+    enqueueTrack(track, user);
   } catch (e) {
     broadcast('tiktok:error', { message: `No se pudo buscar: ${e.message}` });
   }
