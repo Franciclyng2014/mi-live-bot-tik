@@ -328,6 +328,24 @@ function ytExec(args) {
 }
 
 async function searchYouTube(query) {
+  // Try youtube-search-api first (works on Render/datacenter IPs)
+  try {
+    const ysa = require('youtube-search-api');
+    const res = await ysa.GetListByKeyword(query, false, 1);
+    const item = (res.items || [])[0];
+    if (item && item.id) {
+      return {
+        id: item.id,
+        title: item.title,
+        url: `https://www.youtube.com/watch?v=${item.id}`,
+        duration: null,
+        thumbnail: item.thumbnail?.thumbnails?.[0]?.url
+      };
+    }
+  } catch (e) {
+    console.log('youtube-search-api failed:', e.message);
+  }
+  // Fallback to yt-dlp
   const out = await ytExec(['-J', '--no-warnings', `ytsearch1:${query}`]);
   const data = JSON.parse(out);
   const entry = (data.entries && data.entries[0]) || data;
