@@ -123,11 +123,10 @@ $('#btnClearQueue').onclick = async () => {
 function stateVolume() { return 80; }
 // volume control removed (not in UI)
 $('#btnPlayNow').onclick = () => {
-  if (ytReady && ytPlayer && currentTrack && currentTrack.id) {
-    ytPlayer.loadVideoById(currentTrack.id);
-    ytPlayer.playVideo();
+  const video = $('#audioPlayer');
+  if (video && video.src) {
+    video.play().catch((e) => alert('No se pudo reproducir: ' + (e && e.message ? e.message : e)));
   } else if (currentTrack && currentTrack.id) {
-    // fallback: open in new tab
     window.open('https://www.youtube.com/watch?v=' + currentTrack.id, '_blank');
   }
 };
