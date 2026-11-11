@@ -353,7 +353,9 @@ async function searchYouTube(query) {
     }
   } catch (e) {
     console.log('DuckDuckGo search failed:', e.message);
+    var ddgErr = e.message;
   }
+  if (!ddgErr) ddgErr = 'no YouTube link found';
   // Fallback to yt-dlp
   try {
     const out = await ytExec(['-J', '--no-warnings', `ytsearch1:${query}`]);
@@ -367,7 +369,7 @@ async function searchYouTube(query) {
       thumbnail: entry.thumbnail
     };
   } catch (e2) {
-    throw new Error('Search failed: ' + e2.message);
+    throw new Error('DuckDuckGo: ' + ddgErr + ' | yt-dlp: ' + e2.message);
   }
   // Fallback to yt-dlp
   try {
