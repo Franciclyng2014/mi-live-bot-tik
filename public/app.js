@@ -86,7 +86,7 @@ socket.on('music:track', (t) => {
   audio.play().catch(() => {});
 });
 socket.on('music:state', (s) => {
-  $('#volume').value = s.volume;
+  // volume removed
   updateQueue(s.queue || []);
 });
 socket.on('music:queue', (q) => updateQueue(q));
@@ -104,9 +104,7 @@ $('#btnClearQueue').onclick = async () => {
   await fetch('/api/queue/clear', { method: 'POST' });
 };
 function stateVolume() { return parseInt($('#volume').value || '80', 10); }
-$('#volume').oninput = async () => {
-  await fetch('/api/volume', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ volume: parseInt($('#volume').value, 10) }) });
-};
+// volume control removed (not in UI)
 $('#btnSkip').onclick = async () => { await fetch('/api/skip', { method: 'POST' }); };
 $('#btnPause').onclick = async () => { await fetch('/api/pause', { method: 'POST' }); };
 $('#btnResume').onclick = async () => { await fetch('/api/resume', { method: 'POST' }); };
