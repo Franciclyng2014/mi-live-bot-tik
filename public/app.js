@@ -84,14 +84,22 @@ $('#btnPlay').onclick = async () => {
   if (!q) return alert('Ingresa búsqueda');
   await fetch('/api/play', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: q, user: 'host' }) });
 };
+let pendingAudio = null;
 socket.on('music:track', (t) => {
   console.log('music:track received:', t && t.title);
   currentTrack = t;
-  $('#nowPlaying').textContent = `Reproduciendo: ${t.title} (pedido por ${t.requestedBy || ''})`;
+  $('#nowPlaying').textContent = `🎵 ${t.title} (pedido por ${t.requestedBy || ''}) — pulsa ▶ Reproducir si no suena`;
   const audio = $('#audioPlayer');
   audio.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
   audio.volume = 1;
-  audio.play().catch((e) => { console.warn('play failed:', e && e.message); });
+  audio.playbackRate = 1;
+  pendingAudio = audio;
+  audio.play().catch((e) => { console.warn('autoplay blocked:', e && e.message); });
+});
+document.addEventListener('click', () => {
+  if (pendingAudio && pendingAudio.paused) {
+    pendingAudio.play().catch(() => {});
+  }
 });
 socket.on('music:state', (s) => {
   // volume removed
