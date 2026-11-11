@@ -87,7 +87,7 @@ $('#btnPlay').onclick = async () => {
 socket.on('music:track', (t) => {
   console.log('music:track received:', t && t.title);
   currentTrack = t;
-  $('#nowPlaying').textContent = `${t.title} (pedido por ${t.requestedBy || ''})`;
+  $('#nowPlaying').textContent = `NOWPLAYING: ${t.title}`;
   const video = $('#audioPlayer');
   video.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
   video.volume = 1;
