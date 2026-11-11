@@ -203,6 +203,7 @@ function testVoice(lang) {
   const url = '/api/tts?text=' + encodeURIComponent('Esta es una prueba para Mibot live') + '&lang=' + encodeURIComponent(lang || 'es-MX');
   const audio = new Audio(url);
   audio.volume = 1;
+  audio.playbackRate = parseFloat($('#setRateChat').value || '1');
   const p = audio.play();
   if (p && typeof p.catch === 'function') {
     p.catch((e) => alert('No se pudo reproducir: ' + (e && e.message ? e.message : e)));
@@ -308,6 +309,7 @@ socket.on('tts:speak', (d) => {
   const url = '/api/tts?text=' + encodeURIComponent(String(d.text).slice(0,200)) + '&lang=' + encodeURIComponent(lang);
   const audio = new Audio(url);
   audio.volume = 1;
+  audio.playbackRate = ttsRateFor(kind);
   audio.play().catch((e) => { console.warn('TTS play failed:', e && e.message); });
 });
 
