@@ -40,6 +40,13 @@ $('#btnDisconnect').onclick = async () => {
 };
 
 // Chat
+$('#btnSimulate').onclick = async () => {
+  const user = $('#simUser').value.trim() || 'fan1';
+  const comment = $('#simComment').value.trim();
+  if (!comment) return;
+  await fetch('/api/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user, comment }) });
+  $('#simComment').value = '';
+};
 socket.on('chat:message', (m) => {
   const el = $('#chatLog');
   const div = document.createElement('div');
