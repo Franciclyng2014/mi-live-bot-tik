@@ -203,7 +203,12 @@ if ('speechSynthesis' in window) {
 // (removed: voice list button no longer in UI)
 function testVoice(lang) {
   const url = '/api/tts?text=' + encodeURIComponent('Esta es una prueba para Mibot live') + '&lang=' + encodeURIComponent(lang || 'es-MX');
-  new Audio(url).play().catch(() => alert('No se pudo reproducir el audio'));
+  const audio = new Audio(url);
+  audio.volume = 1;
+  const p = audio.play();
+  if (p && typeof p.catch === 'function') {
+    p.catch((e) => alert('No se pudo reproducir: ' + (e && e.message ? e.message : e)));
+  }
 }
 $('#btnTestChat').onclick = () => testVoice($('#setLangChat').value);
 $('#btnTestGift').onclick = () => testVoice($('#setLangGift').value);
@@ -303,7 +308,9 @@ socket.on('tts:speak', (d) => {
   else if (kind === 'gift') lang = currentSettings.langGift || 'es-MX';
   else if (kind === 'like') lang = currentSettings.langLike || 'es-MX';
   const url = '/api/tts?text=' + encodeURIComponent(String(d.text).slice(0,200)) + '&lang=' + encodeURIComponent(lang);
-  new Audio(url).play().catch(() => {});
+  const audio = new Audio(url);
+  audio.volume = 1;
+  audio.play().catch((e) => { console.warn('TTS play failed:', e && e.message); });
 });
 
 // Sound play from remote
