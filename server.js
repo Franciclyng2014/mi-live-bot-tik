@@ -345,18 +345,23 @@ async function searchYouTube(query) {
     }
   } catch (e) {
     console.log('youtube-search-api failed:', e.message, e.stack);
+    var ysaErr = e.message;
   }
   // Fallback to yt-dlp
-  const out = await ytExec(['-J', '--no-warnings', `ytsearch1:${query}`]);
-  const data = JSON.parse(out);
-  const entry = (data.entries && data.entries[0]) || data;
-  return {
-    id: entry.id,
-    title: entry.title,
-    url: entry.webpage_url || `https://www.youtube.com/watch?v=${entry.id}`,
-    duration: entry.duration,
-    thumbnail: entry.thumbnail
-  };
+  try {
+    const out = await ytExec(['-J', '--no-warnings', `ytsearch1:${query}`]);
+    const data = JSON.parse(out);
+    const entry = (data.entries && data.entries[0]) || data;
+    return {
+      id: entry.id,
+      title: entry.title,
+      url: entry.webpage_url || `https://www.youtube.com/watch?v=${entry.id}`,
+      duration: entry.duration,
+      thumbnail: entry.thumbnail
+    };
+  } catch (e2) {
+    throw new Error('YSA: ' + (ysaErr || 'no result') + ' | yt-dlp: ' + e2.message);
+  }
 }
 
 async function getTrackMeta(videoIdOrUrl) {
