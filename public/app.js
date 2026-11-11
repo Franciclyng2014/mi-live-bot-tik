@@ -1,18 +1,4 @@
 const socket = io();
-let ytPlayer = null;
-let ytReady = false;
-window.onYouTubeIframeAPIReady = function() {
-  ytPlayer = new YT.Player('ytPlayer', {
-    height: '360',
-    width: '640',
-    videoId: '',
-    playerVars: { autoplay: 0, controls: 1, modestbranding: 1, rel: 0 },
-    events: {
-      onReady: () => { ytReady = true; },
-      onError: (e) => { console.warn('YT player error:', e.data); }
-    }
-  });
-};
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
@@ -101,15 +87,17 @@ $('#btnPlay').onclick = async () => {
 socket.on('music:track', (t) => {
   console.log('music:track received:', t && t.title);
   currentTrack = t;
-  $('#nowPlaying').textContent = `🎵 ${t.title} (pedido por ${t.requestedBy || ''})`;
-  if (ytReady && ytPlayer && t.id) {
-    ytPlayer.loadVideoById(t.id);
-    ytPlayer.playVideo();
-  }
+  $('#nowPlaying').textContent = `${t.title} (pedido por ${t.requestedBy || ''})`;
+  const video = $('#audioPlayer');
+  video.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
+  video.volume = 1;
+  video.playbackRate = 1;
+  video.play().catch((e) => { console.warn('autoplay blocked:', e && e.message); });
 });
 document.addEventListener('click', () => {
-  if (ytReady && ytPlayer && currentTrack) {
-    ytPlayer.playVideo();
+  const video = $('#audioPlayer');
+  if (video && video.paused && video.src) {
+    video.play().catch(() => {});
   }
 });
 socket.on('music:state', (s) => {
