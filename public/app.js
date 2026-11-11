@@ -227,6 +227,7 @@ $('#btnSaveSettings').onclick = async () => {
     rateChat: parseFloat($('#setRateChat').value || '1'),
     rateGift: parseFloat($('#setRateGift').value || '1'),
     rateLike: parseFloat($('#setRateLike').value || '1'),
+    chatTtsFormat: $('#setChatFormat').value || 'name',
     skipEmojisOnly: $('#setSkipEmojisOnly').checked,
     stripEmojis: $('#setStripEmojis').checked,
     collapseRepeats: $('#setCollapseRepeats').checked,
@@ -256,6 +257,7 @@ socket.on('settings:update', (s) => {
   if (s.langChat) $('#setLangChat').value = s.langChat;
   if (s.langGift) $('#setLangGift').value = s.langGift;
   if (s.langLike) $('#setLangLike').value = s.langLike;
+  if (s.chatTtsFormat) $('#setChatFormat').value = s.chatTtsFormat;
   if (s.rateChat) $('#setRateChat').value = s.rateChat;
   if (s.rateGift) $('#setRateGift').value = s.rateGift;
   if (s.rateLike) $('#setRateLike').value = s.rateLike;
@@ -302,11 +304,18 @@ function ttsRateFor(kind) {
 socket.on('tts:speak', (d) => {
   const kind = d.kind || 'command';
   if (!ttsEnabledFor(kind)) return;
+  let text = d.text || '';
+  if (kind === 'chat') {
+    const fmt = currentSettings.chatTtsFormat || 'name';
+    if (fmt === 'at') text = `@${d.user} dice ${d.comment}`;
+    else if (fmt === 'colon') text = `${d.user}: ${d.comment}`;
+    else text = `${d.user} dice ${d.comment}`;
+  }
   let lang = 'es-MX';
   if (kind === 'chat') lang = currentSettings.langChat || 'es-MX';
   else if (kind === 'gift') lang = currentSettings.langGift || 'es-MX';
   else if (kind === 'like') lang = currentSettings.langLike || 'es-MX';
-  const url = '/api/tts?text=' + encodeURIComponent(String(d.text).slice(0,200)) + '&lang=' + encodeURIComponent(lang);
+  const url = '/api/tts?text=' + encodeURIComponent(String(text).slice(0,200)) + '&lang=' + encodeURIComponent(lang);
   const audio = new Audio(url);
   audio.volume = 1;
   audio.playbackRate = ttsRateFor(kind);

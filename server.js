@@ -47,6 +47,7 @@ function loadSettings() {
     ttsChat: true, ttsGift: true, ttsLike: true, ttsFollow: true, ttsJoin: true, ttsShare: true,
     langChat: 'es-MX', langGift: 'es-MX', langLike: 'es-MX', langFollow: 'es-MX', langJoin: 'es-MX', langShare: 'es-MX',
     rateChat: 1, rateGift: 1, rateLike: 1, rateFollow: 1, rateJoin: 1, rateShare: 1,
+    chatTtsFormat: 'name',
     maxQueueSize: 50,
     // text filters
     skipEmojisOnly: false, stripEmojis: false, collapseRepeats: true, skipLinks: true, normalizeCaps: true,
@@ -159,7 +160,7 @@ async function connectTikTok(username) {
     addChat(msg);
     handleCommand(msg);
     if (state.settings.ttsChat !== false && filtered.read) {
-      broadcast('tts:speak', { kind: 'chat', text: `${msg.user} dice ${msg.comment}`, user: msg.user });
+      broadcast('tts:speak', { kind: 'chat', user: msg.user, comment: msg.comment });
     }
     // points
     if (!state.points[msg.user]) state.points[msg.user] = 0;
