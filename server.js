@@ -328,24 +328,46 @@ function ytExec(args) {
 }
 
 async function searchYouTube(query) {
-  // Try youtube-search-api first (works on Render/datacenter IPs)
+  // Try DuckDuckGo + oembed (works on Render/datacenter IPs, no module needed)
   try {
-    const ysa = require('youtube-search-api');
-    const res = await ysa.GetListByKeyword(query, false, 1);
-    console.log('YSA result:', JSON.stringify(res).slice(0, 200));
-    const item = (res.items || [])[0];
-    if (item && item.id) {
+    const ddgUrl = 'https://duckduckgo.com/html/?q=' + encodeURIComponent(query + ' site:youtube.com');
+    const ddgRes = await fetch(ddgUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } });
+    const ddgHtml = await ddgRes.text();
+    const m = ddgHtml.match(/youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/);
+    if (m && m[1]) {
+      const id = m[1];
+      // get title via oembed
+      let title = query;
+      try {
+        const oembed = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+        const odata = await oembed.json();
+        if (odata.title) title = odata.title;
+      } catch {}
       return {
-        id: item.id,
-        title: item.title,
-        url: `https://www.youtube.com/watch?v=${item.id}`,
+        id: id,
+        title: title,
+        url: `https://www.youtube.com/watch?v=${id}`,
         duration: null,
-        thumbnail: item.thumbnail?.thumbnails?.[0]?.url
+        thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
       };
     }
   } catch (e) {
-    console.log('youtube-search-api failed:', e.message, e.stack);
-    var ysaErr = e.message;
+    console.log('DuckDuckGo search failed:', e.message);
+  }
+  // Fallback to yt-dlp
+  try {
+    const out = await ytExec(['-J', '--no-warnings', `ytsearch1:${query}`]);
+    const data = JSON.parse(out);
+    const entry = (data.entries && data.entries[0]) || data;
+    return {
+      id: entry.id,
+      title: entry.title,
+      url: entry.webpage_url || `https://www.youtube.com/watch?v=${entry.id}`,
+      duration: entry.duration,
+      thumbnail: entry.thumbnail
+    };
+  } catch (e2) {
+    throw new Error('Search failed: ' + e2.message);
   }
   // Fallback to yt-dlp
   try {
