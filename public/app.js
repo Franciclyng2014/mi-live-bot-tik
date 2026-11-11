@@ -326,6 +326,7 @@ function ttsRateFor(kind) {
 
 // TTS
 socket.on('tts:speak', (d) => {
+  console.log('tts:speak received:', d && d.kind, d && (d.text || d.comment));
   const kind = d.kind || 'command';
   if (!ttsEnabledFor(kind)) return;
   let text = d.text || '';
