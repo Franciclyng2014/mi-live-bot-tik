@@ -113,6 +113,12 @@ $('#btnClearQueue').onclick = async () => {
 };
 function stateVolume() { return 80; }
 // volume control removed (not in UI)
+$('#btnPlayNow').onclick = () => {
+  const audio = $('#audioPlayer');
+  if (audio && audio.src) {
+    audio.play().catch((e) => alert('No se pudo reproducir: ' + (e && e.message ? e.message : e)));
+  }
+};
 $('#btnSkip').onclick = async () => { await fetch('/api/skip', { method: 'POST' }); };
 $('#btnPause').onclick = async () => { await fetch('/api/pause', { method: 'POST' }); };
 $('#btnResume').onclick = async () => { await fetch('/api/resume', { method: 'POST' }); };
