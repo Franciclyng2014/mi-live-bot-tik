@@ -60,7 +60,8 @@
           <button id="btnPlay">Reproducir</button>
         </div>
         <div id="nowPlaying" class="now-playing">Nada reproduciéndose</div>
-        <video id="audioPlayer" controls style="width:100%;border-radius:12px"></video>
+        <video id="audioPlayer" controls style="width:100%;border-radius:12px;display:none"></video>
+        <div id="ytPlayer" style="width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden"></div>
         <div class="row">
           <button id="btnPlayNow" class="secondary">▶ Reproducir</button>
           <button id="btnSkip" class="secondary">Saltar</button>
@@ -225,7 +226,8 @@
   </main>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/app.js?v=3"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="/app.js?v=4"></script>
   <script>
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
   </script>

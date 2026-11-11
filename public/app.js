@@ -1,4 +1,18 @@
 const socket = io();
+let ytPlayer = null;
+let ytReady = false;
+window.onYouTubeIframeAPIReady = function() {
+  ytPlayer = new YT.Player('ytPlayer', {
+    height: '360',
+    width: '640',
+    videoId: '',
+    playerVars: { autoplay: 0, controls: 1, modestbranding: 1, rel: 0 },
+    events: {
+      onReady: () => { ytReady = true; },
+      onError: (e) => { console.warn('YT player error:', e.data); }
+    }
+  });
+};
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
@@ -84,21 +98,18 @@ $('#btnPlay').onclick = async () => {
   if (!q) return alert('Ingresa búsqueda');
   await fetch('/api/play', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: q, user: 'host' }) });
 };
-let pendingAudio = null;
 socket.on('music:track', (t) => {
   console.log('music:track received:', t && t.title);
   currentTrack = t;
-  $('#nowPlaying').textContent = `🎵 ${t.title} (pedido por ${t.requestedBy || ''}) — pulsa ▶ Reproducir si no suena`;
-  const audio = $('#audioPlayer');
-  audio.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
-  audio.volume = 1;
-  audio.playbackRate = 1;
-  pendingAudio = audio;
-  audio.play().catch((e) => { console.warn('autoplay blocked:', e && e.message); });
+  $('#nowPlaying').textContent = `🎵 ${t.title} (pedido por ${t.requestedBy || ''})`;
+  if (ytReady && ytPlayer && t.id) {
+    ytPlayer.loadVideoById(t.id);
+    ytPlayer.playVideo();
+  }
 });
 document.addEventListener('click', () => {
-  if (pendingAudio && pendingAudio.paused) {
-    pendingAudio.play().catch(() => {});
+  if (ytReady && ytPlayer && currentTrack) {
+    ytPlayer.playVideo();
   }
 });
 socket.on('music:state', (s) => {
@@ -122,9 +133,12 @@ $('#btnClearQueue').onclick = async () => {
 function stateVolume() { return 80; }
 // volume control removed (not in UI)
 $('#btnPlayNow').onclick = () => {
-  const audio = $('#audioPlayer');
-  if (audio && audio.src) {
-    audio.play().catch((e) => alert('No se pudo reproducir: ' + (e && e.message ? e.message : e)));
+  if (ytReady && ytPlayer && currentTrack && currentTrack.id) {
+    ytPlayer.loadVideoById(currentTrack.id);
+    ytPlayer.playVideo();
+  } else if (currentTrack && currentTrack.id) {
+    // fallback: open in new tab
+    window.open('https://www.youtube.com/watch?v=' + currentTrack.id, '_blank');
   }
 };
 $('#btnSkip').onclick = async () => { await fetch('/api/skip', { method: 'POST' }); };
