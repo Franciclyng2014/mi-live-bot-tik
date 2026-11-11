@@ -201,11 +201,13 @@ if ('speechSynthesis' in window) {
 }
 
 // (removed: voice list button no longer in UI)
-$('#btnTestVoice').onclick = () => {
-  const lang = $('#setLangChat').value || 'es-MX';
-  const url = '/api/tts?text=' + encodeURIComponent('Esta es una muestra para bot Mi Live Bot') + '&lang=' + encodeURIComponent(lang);
+function testVoice(lang) {
+  const url = '/api/tts?text=' + encodeURIComponent('Esta es una prueba para Mibot live') + '&lang=' + encodeURIComponent(lang || 'es-MX');
   new Audio(url).play().catch(() => alert('No se pudo reproducir el audio'));
-};
+}
+$('#btnTestChat').onclick = () => testVoice($('#setLangChat').value);
+$('#btnTestGift').onclick = () => testVoice($('#setLangGift').value);
+$('#btnTestLike').onclick = () => testVoice($('#setLangLike').value);
 $('#btnSaveSettings').onclick = async () => {
   const body = {
     commandPrefix: $('#setPrefix').value.trim() || '!',
