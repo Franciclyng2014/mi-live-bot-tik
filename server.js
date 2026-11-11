@@ -43,10 +43,15 @@ function loadSettings() {
   const f = path.join(DATA_DIR, 'settings.json');
   const base = {
     commandPrefix: '!', playCommand: 'play', tts: true, alertGift: true, autoConnect: false, username: null, ttsVoice: null,
-    ttsChat: true, ttsGift: true, ttsLike: true,
-    langChat: 'es-MX', langGift: 'es-MX', langLike: 'es-MX',
-    rateChat: 1, rateGift: 1, rateLike: 1,
-    maxQueueSize: 50
+    ttsChat: true, ttsGift: true, ttsLike: true, ttsFollow: true, ttsJoin: true, ttsShare: true,
+    langChat: 'es-MX', langGift: 'es-MX', langLike: 'es-MX', langFollow: 'es-MX', langJoin: 'es-MX', langShare: 'es-MX',
+    rateChat: 1, rateGift: 1, rateLike: 1, rateFollow: 1, rateJoin: 1, rateShare: 1,
+    maxQueueSize: 50,
+    // text filters
+    skipEmojisOnly: true, stripEmojis: false, collapseRepeats: true, skipLinks: true, normalizeCaps: true,
+    // moderation
+    profanityLevel: 'medium', linksMode: 'blur', blockSpam: true, blockRepeats: true, tiktokOnly: true, maxCommentLength: 200,
+    allowedUsers: [], blockedUsers: []
   };
   try {
     const saved = JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -107,19 +112,52 @@ async function connectTikTok(username) {
     broadcast('tiktok:error', { message: String(err?.message || err) });
   });
 
+  const BAD_WORDS = ['puta','mierda','idiota','estupido','carajo','pendejo'];
+  function filterChatText(user, comment) {
+    const s = state.settings;
+    // blocked users
+    if (Array.isArray(s.blockedUsers) && s.blockedUsers.includes(user)) return { read: false, text: comment };
+    // allowed users
+    if (Array.isArray(s.allowedUsers) && s.allowedUsers.length > 0 && !s.allowedUsers.includes(user)) return { read: false, text: comment };
+    let text = comment || '';
+    // skip links
+    if (s.skipLinks !== false && /https?:\/\/|www\./i.test(text)) return { read: false, text };
+    // skip emojis only
+    if (s.skipEmojisOnly !== false && /^[\p{Emoji}\s]+$/u.test(text)) return { read: false, text };
+    // strip emojis
+    if (s.stripEmojis) text = text.replace(/[\p{Emoji}]/gu, '').trim();
+    // collapse repeats
+    if (s.collapseRepeats !== false) text = text.replace(/(.)\1{2,}/g, '$1$1');
+    // normalize caps
+    if (s.normalizeCaps !== false && text === text.toUpperCase() && text.length > 3) {
+      text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    }
+    // max length
+    if (s.maxCommentLength && text.length > s.maxCommentLength) return { read: false, text };
+    // profanity
+    if (s.profanityLevel && s.profanityLevel !== 'off') {
+      const lower = text.toLowerCase();
+      if (BAD_WORDS.some((w) => lower.includes(w))) return { read: false, text };
+    }
+    return { read: true, text };
+  }
+
   conn.on(WebcastEvent.CHAT, (data) => {
     console.log('CHAT RAW:', JSON.stringify(data).slice(0, 500));
     const user = data.uniqueId || data.user?.uniqueId || data.nickname || data.user?.nickname || 'user';
+    const rawComment = data.comment || data.text || '';
     const msg = {
       id: data.msgId || Date.now(),
       user: user,
       nickname: data.nickname || data.user?.nickname,
-      comment: data.comment || data.text || '',
+      comment: rawComment,
       timestamp: Date.now()
     };
+    const filtered = filterChatText(user, rawComment);
+    msg.comment = filtered.text || rawComment;
     addChat(msg);
     handleCommand(msg);
-    if (state.settings.ttsChat !== false) {
+    if (state.settings.ttsChat !== false && filtered.read) {
       broadcast('tts:speak', { kind: 'chat', text: `${msg.user} dice ${msg.comment}`, user: msg.user });
     }
     // points
@@ -160,11 +198,27 @@ async function connectTikTok(username) {
     }
   });
   conn.on(WebcastEvent.FOLLOW, (data) => {
-    broadcast('tiktok:follow', { user: data.uniqueId });
-    broadcast('overlay:alert', { type: 'follow', text: `${data.uniqueId} te siguió` });
+    const user = data.uniqueId || 'user';
+    broadcast('tiktok:follow', { user });
+    broadcast('overlay:alert', { type: 'follow', text: `${user} te siguió` });
+    if (state.settings.ttsFollow !== false) {
+      broadcast('tts:speak', { kind: 'follow', text: `Gracias ${user} por seguirme`, user });
+    }
+  });
+
+  conn.on(WebcastEvent.MEMBER, (data) => {
+    const user = data.uniqueId || 'user';
+    broadcast('tiktok:join', { user });
+    if (state.settings.ttsJoin !== false) {
+      broadcast('tts:speak', { kind: 'join', text: `Bienvenido ${user} al live`, user });
+    }
   });
   conn.on(WebcastEvent.SHARE, (data) => {
-    broadcast('tiktok:share', { user: data.uniqueId });
+    const user = data.uniqueId || 'user';
+    broadcast('tiktok:share', { user });
+    if (state.settings.ttsShare !== false) {
+      broadcast('tts:speak', { kind: 'share', text: `Gracias ${user} por compartir el live`, user });
+    }
   });
 
   try {

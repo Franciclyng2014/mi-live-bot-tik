@@ -156,10 +156,51 @@
           <label><input type="checkbox" id="setAlertGift" checked /> Alertas de regalos</label>
         </div>
 
+        <h3>Filtros de texto</h3>
+        <div class="row">
+          <label><input type="checkbox" id="setSkipEmojisOnly" checked /> Omitir solo emojis</label>
+          <label><input type="checkbox" id="setStripEmojis" /> Quitar emojis/stickers</label>
+          <label><input type="checkbox" id="setCollapseRepeats" checked /> Acortar repeticiones</label>
+          <label><input type="checkbox" id="setSkipLinks" checked /> No leer enlaces</label>
+          <label><input type="checkbox" id="setNormalizeCaps" checked /> Normalizar mayúsculas</label>
+        </div>
+
+        <h3>Moderación</h3>
+        <div class="row">
+          <label>Nivel groserías
+            <select id="setProfanity">
+              <option value="off">Apagado</option>
+              <option value="low">Bajo (no leer)</option>
+              <option value="medium" selected>Medio (no leer)</option>
+              <option value="high">Alto (ocultar)</option>
+            </select>
+          </label>
+          <label>Enlaces
+            <select id="setLinksMode">
+              <option value="allow">Permitir</option>
+              <option value="blur" selected>Difuminar y no leer</option>
+              <option value="hide">Ocultar</option>
+            </select>
+          </label>
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="setBlockSpam" checked /> Bloquear spam</label>
+          <label><input type="checkbox" id="setBlockRepeats" checked /> Bloquear repetidos</label>
+          <label><input type="checkbox" id="setTiktokOnly" checked /> Solo comentarios de TikTok</label>
+          <label>Máx. caracteres <input id="setMaxLen" type="number" value="200" min="50" max="500" /></label>
+        </div>
+
+        <h3>Usuarios</h3>
+        <div class="row">
+          <label>Permitidos (separados por coma) <input id="setAllowed" placeholder="user1, user2" /></label>
+          <label>Bloqueados (separados por coma) <input id="setBlocked" placeholder="user1, user2" /></label>
+        </div>
+
         <div class="row">
           <button id="btnSaveSettings">Guardar</button>
           <button id="btnTestVoice" class="secondary">Probar voz (chat)</button>
         </div>
+        <p class="hint">Voces gratis por idioma (Google). No requiere API Key ni tarjeta. Para segundo plano: mantén la pestaña abierta.</p>
         <p class="hint">Voces gratis por idioma (Google). No requiere API Key ni tarjeta. Para segundo plano: mantén la pestaña abierta.</p>
       </div>
     </section>

@@ -220,7 +220,20 @@ $('#btnSaveSettings').onclick = async () => {
     langLike: $('#setLangLike').value || 'es-MX',
     rateChat: parseFloat($('#setRateChat').value || '1'),
     rateGift: parseFloat($('#setRateGift').value || '1'),
-    rateLike: parseFloat($('#setRateLike').value || '1')
+    rateLike: parseFloat($('#setRateLike').value || '1'),
+    skipEmojisOnly: $('#setSkipEmojisOnly').checked,
+    stripEmojis: $('#setStripEmojis').checked,
+    collapseRepeats: $('#setCollapseRepeats').checked,
+    skipLinks: $('#setSkipLinks').checked,
+    normalizeCaps: $('#setNormalizeCaps').checked,
+    profanityLevel: $('#setProfanity').value || 'medium',
+    linksMode: $('#setLinksMode').value || 'blur',
+    blockSpam: $('#setBlockSpam').checked,
+    blockRepeats: $('#setBlockRepeats').checked,
+    tiktokOnly: $('#setTiktokOnly').checked,
+    maxCommentLength: parseInt($('#setMaxLen').value || '200', 10),
+    allowedUsers: $('#setAllowed').value.split(',').map(s => s.trim()).filter(Boolean),
+    blockedUsers: $('#setBlocked').value.split(',').map(s => s.trim()).filter(Boolean)
   };
   await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   alert('Guardado');
@@ -240,6 +253,19 @@ socket.on('settings:update', (s) => {
   if (s.rateChat) $('#setRateChat').value = s.rateChat;
   if (s.rateGift) $('#setRateGift').value = s.rateGift;
   if (s.rateLike) $('#setRateLike').value = s.rateLike;
+  $('#setSkipEmojisOnly').checked = s.skipEmojisOnly !== false;
+  $('#setStripEmojis').checked = !!s.stripEmojis;
+  $('#setCollapseRepeats').checked = s.collapseRepeats !== false;
+  $('#setSkipLinks').checked = s.skipLinks !== false;
+  $('#setNormalizeCaps').checked = s.normalizeCaps !== false;
+  if (s.profanityLevel) $('#setProfanity').value = s.profanityLevel;
+  if (s.linksMode) $('#setLinksMode').value = s.linksMode;
+  $('#setBlockSpam').checked = s.blockSpam !== false;
+  $('#setBlockRepeats').checked = s.blockRepeats !== false;
+  $('#setTiktokOnly').checked = s.tiktokOnly !== false;
+  if (s.maxCommentLength) $('#setMaxLen').value = s.maxCommentLength;
+  if (Array.isArray(s.allowedUsers)) $('#setAllowed').value = s.allowedUsers.join(', ');
+  if (Array.isArray(s.blockedUsers)) $('#setBlocked').value = s.blockedUsers.join(', ');
   loadVoices();
 });
 
