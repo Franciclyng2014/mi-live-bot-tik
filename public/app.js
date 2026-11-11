@@ -85,12 +85,13 @@ $('#btnPlay').onclick = async () => {
   await fetch('/api/play', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: q, user: 'host' }) });
 };
 socket.on('music:track', (t) => {
+  console.log('music:track received:', t && t.title);
   currentTrack = t;
   $('#nowPlaying').textContent = `Reproduciendo: ${t.title} (pedido por ${t.requestedBy || ''})`;
   const audio = $('#audioPlayer');
   audio.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
-  audio.volume = (stateVolume() / 100);
-  audio.play().catch(() => {});
+  audio.volume = 1;
+  audio.play().catch((e) => { console.warn('play failed:', e && e.message); });
 });
 socket.on('music:state', (s) => {
   // volume removed
