@@ -579,52 +579,20 @@ app.get('/api/search', async (req, res) => {
 });
 
 // Stream audio for a video id or url
-// Cache for streamed video (to support range requests)
-if (!state.videoCache) state.videoCache = {};
-
 app.get('/api/stream', async (req, res) => {
   const video = req.query.v;
   if (!video) return res.status(400).end();
   const url = video.startsWith('http') ? video : `https://www.youtube.com/watch?v=${video}`;
-  // Check cache
-  if (!state.videoCache[video]) {
-    // Download full video into buffer
-    const buffer = await new Promise((resolve, reject) => {
-      const chunks = [];
-      const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android', '-f', '18', '-o', '-', url], { stdio: ['ignore', 'pipe', 'pipe'] });
-      proc.stdout.on('data', (d) => chunks.push(d));
-      proc.stderr.on('data', () => {});
-      proc.on('close', (code) => {
-        if (code !== 0) reject(new Error('yt-dlp failed'));
-        else resolve(Buffer.concat(chunks));
-      });
-      proc.on('error', reject);
-    });
-    state.videoCache[video] = buffer;
-    // Keep only last video to save memory
-    const keys = Object.keys(state.videoCache);
-    if (keys.length > 1) {
-      for (const k of keys.slice(0, -1)) delete state.videoCache[k];
-    }
-  }
-  const buffer = state.videoCache[video];
-  const total = buffer.length;
-  const range = req.headers.range;
+  // kill previous
+  if (state.streamProc) { try { state.streamProc.kill(); } catch {} state.streamProc = null; }
   res.setHeader('Content-Type', 'video/mp4');
-  res.setHeader('Accept-Ranges', 'bytes');
-  if (range) {
-    const parts = range.replace(/bytes=/, '').split('-');
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : total - 1;
-    const chunkSize = end - start + 1;
-    res.status(206);
-    res.setHeader('Content-Range', `bytes ${start}-${end}/${total}`);
-    res.setHeader('Content-Length', chunkSize);
-    res.send(buffer.slice(start, end + 1));
-  } else {
-    res.setHeader('Content-Length', total);
-    res.send(buffer);
-  }
+  res.setHeader('Cache-Control', 'no-cache');
+  const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android', '-f', '18', '-o', '-', url], { stdio: ['ignore', 'pipe', 'pipe'] });
+  state.streamProc = proc;
+  proc.stdout.pipe(res);
+  proc.stderr.on('data', (d) => { /* console.error(d.toString()); */ });
+  proc.on('close', () => { if (state.streamProc === proc) state.streamProc = null; });
+  req.on('close', () => { if (state.streamProc === proc) { try { proc.kill(); } catch {} state.streamProc = null; } });
 });
 
 app.get('/api/sounds', (req, res) => res.json(state.sounds));
