@@ -328,6 +328,24 @@ function ytExec(args) {
 }
 
 async function searchYouTube(query) {
+  // If it's a YouTube URL, use oembed directly
+  const urlMatch = query.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (urlMatch) {
+    const id = urlMatch[1];
+    let title = query;
+    try {
+      const oembed = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+      const odata = await oembed.json();
+      if (odata.title) title = odata.title;
+    } catch {}
+    return {
+      id: id,
+      title: title,
+      url: `https://www.youtube.com/watch?v=${id}`,
+      duration: null,
+      thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+    };
+  }
   // Try DuckDuckGo + oembed (works on Render/datacenter IPs, no module needed)
   try {
     const ddgUrl = 'https://duckduckgo.com/html/?q=' + encodeURIComponent(query + ' site:youtube.com');
