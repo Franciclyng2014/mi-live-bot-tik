@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { TikTokLiveConnection, WebcastEvent } = require('tiktok-live-connector');
+const PYTHON = process.platform === 'win32' ? 'python' : 'python3';
 const googleTts = require('google-tts-api');
 
 const app = express();
@@ -247,7 +248,7 @@ function getMusicState() {
 // ---------- YouTube ----------
 function ytExec(args) {
   return new Promise((resolve, reject) => {
-    const proc = spawn('python', ['-m', 'yt_dlp', '--js-runtimes', 'node', ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '', err = '';
     proc.stdout.on('data', (d) => { out += d.toString(); });
     proc.stderr.on('data', (d) => { err += d.toString(); });
@@ -429,7 +430,7 @@ app.get('/api/stream', async (req, res) => {
   const mime = ext === 'm4a' || ext === 'mp4' ? 'audio/mp4' : 'audio/webm';
   res.setHeader('Content-Type', mime);
   res.setHeader('Cache-Control', 'no-cache');
-  const proc = spawn('python', ['-m', 'yt_dlp', '--js-runtimes', 'node', '-f', 'bestaudio', '-o', '-', url], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const proc = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '-f', 'bestaudio', '-o', '-', url], { stdio: ['ignore', 'pipe', 'pipe'] });
   state.streamProc = proc;
   proc.stdout.pipe(res);
   proc.stderr.on('data', (d) => { /* console.error(d.toString()); */ });
@@ -559,10 +560,14 @@ app.post('/api/eleven/tts', async (req, res) => {
 
 app.get('/api/yt-version', (req, res) => {
   const { spawn } = require('child_process');
-  const p = spawn('python', ['-m', 'yt_dlp', '--version']);
-  let out = '';
+  const p = spawn(PYTHON, ['-m', 'yt_dlp', '--version']);
+  let out = '', err = '';
   p.stdout.on('data', (d) => { out += d.toString(); });
-  p.on('close', () => res.json({ version: out.trim() }));
+  p.stderr.on('data', (d) => { err += d.toString(); });
+  p.on('close', (code) => {
+    if (code !== 0) return res.status(500).json({ error: err || `exit ${code}` });
+    res.json({ version: out.trim() });
+  });
   p.on('error', (e) => res.status(500).json({ error: String(e.message) }));
 });
 
