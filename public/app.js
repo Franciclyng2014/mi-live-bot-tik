@@ -200,12 +200,7 @@ if ('speechSynthesis' in window) {
   });
 }
 
-$('#btnListVoices').onclick = () => {
-  if (!('speechSynthesis' in window)) { alert('Tu navegador no soporta voces'); return; }
-  const voices = speechSynthesis.getVoices();
-  if (voices.length === 0) { alert('Aún no hay voces cargadas. Espera unos segundos y vuelve a intentar.'); return; }
-  alert(voices.map((v) => `${v.name} (${v.lang})`).join('\n'));
-};
+// (removed: voice list button no longer in UI)
 $('#btnTestVoice').onclick = () => {
   const lang = $('#setLangChat').value || 'es-MX';
   const url = '/api/tts?text=' + encodeURIComponent('Hola, esta es una prueba de voz') + '&lang=' + encodeURIComponent(lang);
