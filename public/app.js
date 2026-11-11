@@ -203,7 +203,7 @@ if ('speechSynthesis' in window) {
 // (removed: voice list button no longer in UI)
 $('#btnTestVoice').onclick = () => {
   const lang = $('#setLangChat').value || 'es-MX';
-  const url = '/api/tts?text=' + encodeURIComponent('Hola, esta es una prueba de voz') + '&lang=' + encodeURIComponent(lang);
+  const url = '/api/tts?text=' + encodeURIComponent('Esta es una muestra para bot Mi Live Bot') + '&lang=' + encodeURIComponent(lang);
   new Audio(url).play().catch(() => alert('No se pudo reproducir el audio'));
 };
 $('#btnSaveSettings').onclick = async () => {
