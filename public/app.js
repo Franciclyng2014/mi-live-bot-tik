@@ -201,22 +201,6 @@ if ('speechSynthesis' in window) {
 }
 
 // (removed: voice list button no longer in UI)
-$('#btnListVoices').onclick = () => {
-  if (!('speechSynthesis' in window)) { alert('Tu navegador no soporta voces'); return; }
-  const voices = speechSynthesis.getVoices();
-  if (voices.length === 0) { alert('Aún no hay voces cargadas. Espera unos segundos y vuelve a intentar.'); return; }
-  alert(voices.map((v) => `${v.name} (${v.lang})`).join('\n'));
-};
-$('#btnTestBrowserVoice').onclick = () => {
-  if (!('speechSynthesis' in window)) { alert('Tu navegador no soporta voces'); return; }
-  const voices = speechSynthesis.getVoices();
-  if (voices.length === 0) { alert('No hay voces disponibles. Instala voces en tu sistema.'); return; }
-  const u = new SpeechSynthesisUtterance('Hola, esta es una prueba de voz');
-  u.lang = 'es-ES';
-  u.rate = parseFloat($('#setRateChat').value || '1');
-  u.voice = voices[0];
-  speechSynthesis.speak(u);
-};
 $('#btnTestVoice').onclick = () => {
   const lang = $('#setLangChat').value || 'es-MX';
   const url = '/api/tts?text=' + encodeURIComponent('Hola, esta es una prueba de voz') + '&lang=' + encodeURIComponent(lang);
