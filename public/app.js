@@ -110,7 +110,7 @@ function updateQueue(q) {
 $('#btnClearQueue').onclick = async () => {
   await fetch('/api/queue/clear', { method: 'POST' });
 };
-function stateVolume() { return parseInt($('#volume').value || '80', 10); }
+function stateVolume() { return 80; }
 // volume control removed (not in UI)
 $('#btnSkip').onclick = async () => { await fetch('/api/skip', { method: 'POST' }); };
 $('#btnPause').onclick = async () => { await fetch('/api/pause', { method: 'POST' }); };
