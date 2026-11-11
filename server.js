@@ -401,13 +401,29 @@ async function getTrackMeta(videoIdOrUrl) {
 }
 
 async function searchAndPending(query, user) {
+  // If it's a YouTube URL, use it directly
+  const urlMatch = query.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (urlMatch) {
+    const id = urlMatch[1];
+    let title = query;
+    try {
+      const oembed = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+      const odata = await oembed.json();
+      if (odata.title) title = odata.title;
+    } catch {}
+    const track = { id, title, url: `https://www.youtube.com/watch?v=${id}`, requestedBy: user };
+    state.pendingPlay = { track, user, timestamp: Date.now() };
+    broadcast('chat:bot', { text: `Encontrado: ${track.title}. Escribe !confirm para añadir o !cancel para descartar` });
+    return;
+  }
+  // Try search
   try {
     const track = await searchYouTube(query);
     track.requestedBy = user;
     state.pendingPlay = { track, user, timestamp: Date.now() };
     broadcast('chat:bot', { text: `Encontrado: ${track.title}. Escribe !confirm para añadir o !cancel para descartar` });
   } catch (e) {
-    broadcast('tiktok:error', { message: `No se pudo buscar: ${e.message}` });
+    broadcast('chat:bot', { text: `No se pudo buscar. Pega la URL de YouTube. Ej: !play https://youtube.com/watch?v=...` });
   }
 }
 
