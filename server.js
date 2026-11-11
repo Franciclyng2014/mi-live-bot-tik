@@ -715,6 +715,19 @@ app.post('/api/eleven/tts', async (req, res) => {
   }
 });
 
+app.get('/api/formats', async (req, res) => {
+  const video = req.query.v;
+  if (!video) return res.status(400).end();
+  const url = video.startsWith('http') ? video : `https://www.youtube.com/watch?v=${video}`;
+  const { spawn } = require('child_process');
+  const p = spawn(PYTHON, ['-m', 'yt_dlp', '--js-runtimes', 'node', '--extractor-args', 'youtube:player_client=android', '--list-formats', url], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '', err = '';
+  p.stdout.on('data', (d) => { out += d.toString(); });
+  p.stderr.on('data', (d) => { err += d.toString(); });
+  p.on('close', () => res.type('text/plain').send(out || err));
+  p.on('error', (e) => res.status(500).send(String(e.message)));
+});
+
 app.get('/api/yt-version', (req, res) => {
   const { spawn } = require('child_process');
   const p = spawn(PYTHON, ['-m', 'yt_dlp', '--version']);
