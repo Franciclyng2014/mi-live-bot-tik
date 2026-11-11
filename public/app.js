@@ -87,21 +87,18 @@ $('#btnPlay').onclick = async () => {
 socket.on('music:track', (t) => {
   console.log('music:track received:', t && t.title);
   currentTrack = t;
-  $('#nowPlaying').textContent = `NOWPLAYING: ${t.title}`;
-  const video = $('#audioPlayer');
-  video.src = '/api/stream?v=' + encodeURIComponent(t.id || t.url);
-  video.volume = 1;
-  video.playbackRate = 1;
-  video.load();
-  video.oncanplay = () => { video.play().catch(() => {}); };
-  video.play().catch(() => {});
-});
-document.addEventListener('click', () => {
-  const video = $('#audioPlayer');
-  if (video && video.paused && video.src) {
-    video.play().catch(() => {});
+  $('#nowPlaying').textContent = `🎵 ${t.title} (pedido por ${t.requestedBy || ''})`;
+  const iframe = $('#ytPlayer');
+  if (iframe && t.id) {
+    iframe.src = `https://www.youtube.com/embed/${t.id}?autoplay=1&controls=1&modestbranding=1&rel=0`;
   }
 });
+$('#btnPlayNow').onclick = () => {
+  if (currentTrack && currentTrack.id) {
+    const iframe = $('#ytPlayer');
+    iframe.src = `https://www.youtube.com/embed/${currentTrack.id}?autoplay=1&controls=1&modestbranding=1&rel=0`;
+  }
+};
 socket.on('music:state', (s) => {
   // volume removed
   updateQueue(s.queue || []);
@@ -123,17 +120,15 @@ $('#btnClearQueue').onclick = async () => {
 function stateVolume() { return 80; }
 // volume control removed (not in UI)
 $('#btnPlayNow').onclick = () => {
-  const video = $('#audioPlayer');
-  if (video && video.src) {
-    video.play().catch((e) => alert('No se pudo reproducir: ' + (e && e.message ? e.message : e)));
-  } else if (currentTrack && currentTrack.id) {
-    window.open('https://www.youtube.com/watch?v=' + currentTrack.id, '_blank');
+  if (currentTrack && currentTrack.id) {
+    const iframe = $('#ytPlayer');
+    iframe.src = `https://www.youtube.com/embed/${currentTrack.id}?autoplay=1&controls=1&modestbranding=1&rel=0`;
   }
 };
 $('#btnSkip').onclick = async () => { await fetch('/api/skip', { method: 'POST' }); };
 $('#btnPause').onclick = async () => { await fetch('/api/pause', { method: 'POST' }); };
 $('#btnResume').onclick = async () => { await fetch('/api/resume', { method: 'POST' }); };
-$('#audioPlayer').addEventListener('ended', async () => { await fetch('/api/skip', { method: 'POST' }); });
+// (no audio element; YouTube iframe handles playback)
 
 // Sounds
 async function loadSounds() {
